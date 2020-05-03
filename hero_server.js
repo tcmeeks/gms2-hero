@@ -30,6 +30,9 @@ class Player {
         this.y = data.y;
         this.animation = null;
         this.x_scale = 1;
+
+        this.gold = 0;
+        this.fame = 0;
     }
 
     toString() {
@@ -129,13 +132,15 @@ io.on('connection', (client) => {
 
         for (let i in units) {
             if(units[i].unitId == data.unitId) {
-                // console.log("Unit Location Updated");
                 units[i].x = data.x;
                 units[i].y = data.y;
+
+                client.broadcast.emit('unit_position_update', units[i].toString());
+                break;
             }
         }
 
-        client.broadcast.emit('unit_position_update', unit.toString());
+        
     });
 
     client.on('animation_update', (data) => {
@@ -164,22 +169,24 @@ io.on('connection', (client) => {
 
         client.emit('create_unit', unit.toString());
         client.broadcast.emit('create_unit', unit.toString());
+
+        console.log(`Unit ${unit.unitId} belonging to player ${unit.playerId} created`);
     });
 
     // When a player closes the game or refresh the page, this event will be triggered
     client.on('disconnect', () => {
 
         //Remove player's units
-        // for (let i in units) {
-        //     console.log("unit playerId: ", units[i].playerId);
-        //     if(units[i].playerId == playerId) {
+        for (let i in units) {
+            //console.log("unit playerId: ", units[i].playerId);
+            if(units[i].playerId == playerId) {
 
-        //         client.broadcast.emit('destroy_unit', unit.toString());
+                client.broadcast.emit('destroy_unit', units[i].toString());
 
-        //         units.splice(i, 1);
-        //         console.log("unit spliced");
-        //     }
-        // }
+                units.splice(i, 1);
+                console.log("unit spliced");
+            }
+        }
 
         // Tell everyone that we disconnected (ourself NOT included, because we already closed the game and we don't care)
         client.broadcast.emit('destroy_player', player.toString());
